@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mario · English speaking coach</title>
+  <meta name="description" content="Practise spoken English with a real-time AI voice tutor and get a grammar and fluency report.">
+  <meta name="theme-color" content="#f7f4ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14161c" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mario">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <main id="view" class="view"></main>
+
+  <nav class="tabs" aria-label="Main">
+    <a href="#/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Zm-7 9a7 7 0 0 0 14 0M12 19v3"/></svg>Practice</a>
+    <a href="#/history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l4-4 3 3 5-6"/></svg>History</a>
+    <a href="#/metrics"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M9 2h6"/></svg>Metrics</a>
+  </nav>
+
+  <dialog id="code-dialog">
+    <form method="dialog">
+      <h2>Access code</h2>
+      <p class="muted">This demo is protected so its free AI quota isn't used up. Enter the code you were given.</p>
+      <input name="code" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Access code">
+      <div class="row">
+        <button class="btn ghost" value="cancel">Cancel</button>
+        <button class="btn primary" value="ok">Continue</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
