@@ -1,0 +1,22 @@
+# Render Blueprint for the backend (free web service).
+# GEMINI_API_KEY and ACCESS_CODE are set in the Render dashboard, never here.
+services:
+  - type: web
+    name: lucia-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.1
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ACCESS_CODE
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://batuhankul61-hub.github.io
+      - key: TRUST_PROXY
+        value: "true"

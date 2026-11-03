@@ -12,6 +12,11 @@ export const PRICES = {
 // Microphone level above which we count a chunk as speech (RMS, 0..1).
 export const VOICE_RMS = 0.02;
 
+// A reply that starts less than this after the learner's last voiced chunk
+// means the learner was still talking: the model jumped in mid-sentence.
+// That's counted as an overlap, not as a (meaninglessly tiny) reply delay.
+const OVERLAP_MS = 200;
+
 export class SessionMetrics {
   constructor(liveModel) {
     this.liveModel = liveModel;
@@ -20,6 +25,7 @@ export class SessionMetrics {
     this.firstAudioMs = null;
     this.turnLatencies = [];
     this.bargeIns = 0;
+    this.overlaps = 0;
     this.lastVoiceAt = null;
     this.awaitingReply = false;
     this.usage = { prompt: {}, response: {}, total: 0 };
@@ -42,7 +48,9 @@ export class SessionMetrics {
     const now = performance.now();
     if (this.firstAudioMs === null) this.firstAudioMs = Math.round(now - this.startedAt);
     if (this.awaitingReply && this.lastVoiceAt) {
-      this.turnLatencies.push(Math.round(now - this.lastVoiceAt));
+      const delay = Math.round(now - this.lastVoiceAt);
+      if (delay < OVERLAP_MS) this.overlaps++;
+      else this.turnLatencies.push(delay);
     }
     this.awaitingReply = false;
   }
@@ -82,6 +90,7 @@ export class SessionMetrics {
       turnLatencies: this.turnLatencies,
       medianLatencyMs: sorted.length ? sorted[Math.floor(sorted.length / 2)] : null,
       bargeIns: this.bargeIns,
+      overlaps: this.overlaps,
       liveModel: this.liveModel,
       liveTokens: { prompt: this.usage.prompt, response: this.usage.response, total: this.usage.total },
       reportTokens: reportUsage ? reportUsage.prompt_tokens + reportUsage.output_tokens : 0,

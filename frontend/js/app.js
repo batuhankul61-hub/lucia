@@ -337,7 +337,8 @@ function metricsList(m) {
     <div><dt>Connect</dt><dd>${fmtMs(m.connectMs)}</dd></div>
     <div><dt>First voice reply</dt><dd>${fmtMs(m.firstAudioMs)}</dd></div>
     <div><dt>Median reply delay</dt><dd>${fmtMs(m.medianLatencyMs)}</dd></div>
-    <div><dt>Interruptions</dt><dd>${m.bargeIns}</dd></div>
+    <div><dt>You interrupted</dt><dd>${m.bargeIns}</dd></div>
+    <div><dt>Lucia cut in early</dt><dd>${m.overlaps ?? 0}</dd></div>
     <div><dt>Live tokens in</dt><dd>${tokens(m.liveTokens?.prompt)}</dd></div>
     <div><dt>Live tokens out</dt><dd>${tokens(m.liveTokens?.response)}</dd></div>
     <div><dt>Report tokens</dt><dd>${(m.reportTokens ?? 0).toLocaleString()}</dd></div>
