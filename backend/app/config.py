@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # Model IDs checked against https://aistudio.google.com/docs/models (Nov 2026).
     live_model: str = "gemini-3.8-live"
     report_model: str = "gemini-3.5-flash-lite"
+    report_fallback_model: str = "gemini-3.1-flash-lite"
 
     # Comma-separated list of frontend origins allowed by CORS.
     allowed_origins: str = "http://localhost:5500,http://127.0.0.1:5500"
@@ -31,6 +32,10 @@ class Settings(BaseSettings):
 
     # Behind Render's proxy the client IP is in X-Forwarded-For.
     trust_proxy: bool = False
+
+    @property
+    def report_models(self) -> list[str]:
+        return [m for m in (self.report_model, self.report_fallback_model) if m]
 
     @property
     def origins(self) -> list[str]:

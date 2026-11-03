@@ -19,8 +19,10 @@ const prefs = {
     } catch {}
   },
 };
-// ?fake=<audio url> replaces the microphone with a recording (manual testing).
-const fakeSource = new URLSearchParams(location.search).get("fake");
+// ?fake=<audio url> replaces the microphone with a recording (local testing only).
+const fakeSource = ["localhost", "127.0.0.1"].includes(location.hostname)
+  ? new URLSearchParams(location.search).get("fake")
+  : null;
 
 let conversation = null;
 
@@ -43,7 +45,7 @@ const routes = [
 
 async function route() {
   const hash = location.hash || "#/";
-  if (conversation && !hash.startsWith("#/talk/")) await finishConversation();
+  if (conversation && !hash.startsWith("#/talk/")) await finishConversation("left the page");
   for (const [re, fn] of routes) {
     const m = hash.match(re);
     if (m) {
@@ -124,7 +126,8 @@ async function renderTalk(scenarioId) {
   }
   // Starting needs a tap of its own: browsers only allow the microphone and
   // audio playback to begin inside a user gesture.
-  foot.innerHTML = `<button class="btn primary big" id="go">Start talking</button>
+  foot.innerHTML = `${fakeSource ? `<p class="banner error">Test mode: your microphone is off and a recording (${esc(fakeSource)}) plays instead. Remove <code>?fake=</code> from the address to talk yourself.</p>` : ""}
+    <button class="btn primary big" id="go">Start talking</button>
     <p class="muted center">Mario speaks first. Interrupt him any time, just like a real conversation.</p>`;
   foot.querySelector("#go").addEventListener("click", () => startConversation(scenario), { once: true });
 }
@@ -145,7 +148,7 @@ async function startConversation(scenario) {
 
   foot.innerHTML = `<div class="meter" aria-hidden="true"><span id="meter"></span></div>
     <button class="btn danger big" id="end">End and get my report</button>`;
-  foot.querySelector("#end").addEventListener("click", () => finishConversation());
+  foot.querySelector("#end").addEventListener("click", () => finishConversation("end button"));
   const meter = foot.querySelector("#meter");
 
   conv.addEventListener("state", (e) => {
@@ -172,11 +175,11 @@ async function startConversation(scenario) {
   conv.addEventListener("notice", (e) => toast(e.detail));
   conv.addEventListener("timeup", () => {
     toast("Time's up for this session.");
-    finishConversation();
+    finishConversation("time limit");
   });
   conv.addEventListener("dropped", () => {
     toast("The connection dropped. Saving what we have.");
-    finishConversation();
+    finishConversation("connection dropped");
   });
   conv.addEventListener("error", (e) => toast(String(e.detail)));
 
@@ -200,10 +203,11 @@ async function startConversation(scenario) {
   }
 }
 
-async function finishConversation() {
+async function finishConversation(reason) {
   const conv = conversation;
   if (!conv) return;
   conversation = null;
+  console.info("[mario] conversation ended:", reason);
   const result = await conv.end();
   if (!result || !result.turns.length) {
     if (location.hash.startsWith("#/talk/")) location.hash = "#/";
@@ -236,6 +240,8 @@ async function requestReport(session, liveMetrics) {
     else session.metrics = { ...session.metrics, reportTokens: res.usage.prompt_tokens + res.usage.output_tokens };
   } catch (err) {
     session.reportError = err.message;
+    // 422 = too little speech; retrying won't change that.
+    session.reportRetryable = !(err instanceof ApiError && err.status === 422);
     if (err instanceof ApiError && err.status === 401) session.reportError = "Access code needed.";
   }
   await saveSession(session);
@@ -277,7 +283,7 @@ async function renderReport(id) {
       )}
       ${s.droppedUngrounded ? `<p class="muted small">${s.droppedUngrounded} suggestion(s) were removed because they didn't quote something you actually said.</p>` : ""}`;
   } else if (s.reportError) {
-    body = `<p class="banner error">${esc(s.reportError)}</p><button class="btn primary" id="retry">Try the report again</button>`;
+    body = `<p class="banner error">${esc(s.reportError)}</p>${s.reportRetryable === false ? "" : `<button class="btn primary" id="retry">Try the report again</button>`}`;
   } else {
     body = `<div class="loading"><span class="spinner"></span>Mario is writing your report…</div>`;
   }
@@ -438,7 +444,7 @@ function askAccessCode(retry) {
 window.addEventListener("hashchange", route);
 window.addEventListener("online", route);
 window.addEventListener("offline", () => !conversation && route());
-window.addEventListener("pagehide", () => conversation?.end());
+window.addEventListener("pagehide", () => finishConversation("page closed"));
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
 warmUp();

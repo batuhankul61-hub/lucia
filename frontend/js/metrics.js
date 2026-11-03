@@ -6,6 +6,7 @@
 export const PRICES = {
   "gemini-3.8-live": { in: { TEXT: 0.75, AUDIO: 3.0 }, out: { TEXT: 4.5, AUDIO: 12.0 } },
   "gemini-3.5-flash-lite": { in: { TEXT: 0.3 }, out: { TEXT: 2.5 } },
+  "gemini-3.1-flash-lite": { in: { TEXT: 0.25 }, out: { TEXT: 1.5 } },
 };
 
 // Microphone level above which we count a chunk as speech (RMS, 0..1).
@@ -61,6 +62,10 @@ export class SessionMetrics {
         this.usage[key][d.modality] = (this.usage[key][d.modality] ?? 0) + (d.tokenCount ?? 0);
       }
     }
+    // Thinking tokens aren't in responseTokensDetails but are billed as text output.
+    if (meta.thoughtsTokenCount) {
+      this.usage.response.THOUGHTS = (this.usage.response.THOUGHTS ?? 0) + meta.thoughtsTokenCount;
+    }
     this.usage.total += meta.totalTokenCount ?? 0;
   }
 
@@ -88,6 +93,7 @@ export class SessionMetrics {
 function cost(price, prompt, response) {
   if (!price) return 0;
   const side = (rates, counts) =>
+    // Modalities without their own price (e.g. THOUGHTS) are billed at the text rate.
     Object.entries(counts).reduce((sum, [mod, n]) => sum + (n * (rates[mod] ?? rates.TEXT ?? 0)) / 1e6, 0);
   return side(price.in, prompt) + side(price.out, response);
 }
