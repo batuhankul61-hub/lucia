@@ -1,6 +1,6 @@
 // Conversation history, stored on the device in IndexedDB.
 
-const DB_NAME = "mario";
+const DB_NAME = "lucia";
 const STORE = "sessions";
 
 let dbPromise = null;

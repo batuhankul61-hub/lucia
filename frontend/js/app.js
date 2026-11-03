@@ -8,14 +8,14 @@ const view = document.getElementById("view");
 const prefs = {
   get(key, fallback) {
     try {
-      return localStorage.getItem(`mario.${key}`) ?? fallback;
+      return localStorage.getItem(`lucia.${key}`) ?? fallback;
     } catch {
       return fallback;
     }
   },
   set(key, value) {
     try {
-      localStorage.setItem(`mario.${key}`, value);
+      localStorage.setItem(`lucia.${key}`, value);
     } catch {}
   },
 };
@@ -64,7 +64,7 @@ function renderHome() {
   const speaker = prefs.get("speaker", matchMedia("(pointer: coarse)").matches ? "1" : "0") === "1";
   view.innerHTML = `
     <header class="hero">
-      <h1>Hi, I'm Mario.</h1>
+      <h1>Hi, I'm Lucia.</h1>
       <p>Pick a situation and talk it through out loud. You'll get a short report on your English when you finish.</p>
     </header>
     ${navigator.onLine ? "" : `<p class="banner">You're offline. History and metrics still work; conversations need internet.</p>`}
@@ -88,7 +88,7 @@ function renderHome() {
     </section>
     <label class="toggle">
       <input type="checkbox" id="speaker" ${speaker ? "checked" : ""}>
-      <span><strong>Speaker mode</strong><small>Turn on if you're not wearing headphones, so Mario doesn't hear himself.</small></span>
+      <span><strong>Speaker mode</strong><small>Turn on if you're not wearing headphones, so the mic doesn't pick up Lucia's voice.</small></span>
     </label>`;
 
   view.querySelectorAll("[data-level]").forEach((b) =>
@@ -102,7 +102,7 @@ function renderHome() {
 
 // ---------- conversation ----------
 
-const STATE_LABEL = { connecting: "Connecting…", listening: "Listening", speaking: "Mario is speaking", ended: "Finished" };
+const STATE_LABEL = { connecting: "Connecting…", listening: "Listening", speaking: "Lucia is speaking", ended: "Finished" };
 
 async function renderTalk(scenarioId) {
   const scenario = scenarioById(scenarioId);
@@ -128,7 +128,7 @@ async function renderTalk(scenarioId) {
   // audio playback to begin inside a user gesture.
   foot.innerHTML = `${fakeSource ? `<p class="banner error">Test mode: your microphone is off and a recording (${esc(fakeSource)}) plays instead. Remove <code>?fake=</code> from the address to talk yourself.</p>` : ""}
     <button class="btn primary big" id="go">Start talking</button>
-    <p class="muted center">Mario speaks first. Interrupt him any time, just like a real conversation.</p>`;
+    <p class="muted center">Lucia speaks first. You can interrupt any time, just like in a real conversation.</p>`;
   foot.querySelector("#go").addEventListener("click", () => startConversation(scenario), { once: true });
 }
 
@@ -169,7 +169,7 @@ async function startConversation(scenario) {
     }
     li.className = `bubble ${turn.role}${turn.interrupted ? " cut" : ""}${turn.echo ? " echo" : ""}`;
     li.textContent = turn.text;
-    if (turn.echo) li.title = "Ignored: this looked like Mario's own voice picked up by the mic.";
+    if (turn.echo) li.title = "Ignored: this looked like Lucia's own voice picked up by the mic.";
     list.scrollTop = list.scrollHeight;
   });
   conv.addEventListener("notice", (e) => toast(e.detail));
@@ -207,7 +207,7 @@ async function finishConversation(reason) {
   const conv = conversation;
   if (!conv) return;
   conversation = null;
-  console.info("[mario] conversation ended:", reason);
+  console.info("[lucia] conversation ended:", reason);
   const result = await conv.end();
   if (!result || !result.turns.length) {
     if (location.hash.startsWith("#/talk/")) location.hash = "#/";
@@ -285,7 +285,7 @@ async function renderReport(id) {
   } else if (s.reportError) {
     body = `<p class="banner error">${esc(s.reportError)}</p>${s.reportRetryable === false ? "" : `<button class="btn primary" id="retry">Try the report again</button>`}`;
   } else {
-    body = `<div class="loading"><span class="spinner"></span>Mario is writing your report…</div>`;
+    body = `<div class="loading"><span class="spinner"></span>Lucia is writing your report…</div>`;
   }
 
   view.innerHTML = `
@@ -386,7 +386,7 @@ async function renderMetrics() {
 
   view.innerHTML = `
     <header class="page-head"><h1>Metrics</h1>
-      <p class="muted">Measured on this device across ${sessions.length} conversation(s). Reply delay runs from the end of your speech to Mario's first audio.</p></header>
+      <p class="muted">Measured on this device across ${sessions.length} conversation(s). Reply delay runs from the end of your speech to Lucia's first audio.</p></header>
     <dl class="stats big">
       <div><dt>Median reply delay</dt><dd>${fmtMs(median(allLatencies))}</dd></div>
       <div><dt>Median first reply</dt><dd>${fmtMs(median(vals("firstAudioMs")))}</dd></div>

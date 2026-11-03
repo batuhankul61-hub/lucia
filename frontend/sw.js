@@ -1,7 +1,7 @@
 // App-shell service worker: the UI, history and metrics work offline.
 // API calls and the Gemini WebSocket always go to the network.
 
-const VERSION = "mario-v1";
+const VERSION = "lucia-v1";
 const SHELL = [
   "./",
   "index.html",

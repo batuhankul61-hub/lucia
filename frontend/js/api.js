@@ -1,10 +1,10 @@
-// Calls to the Mario backend. The Gemini API key never reaches the browser;
+// Calls to the Lucia backend. The Gemini API key never reaches the browser;
 // the backend hands out a short-lived, single-use token instead.
 
 const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
-export const API_BASE = LOCAL ? `http://${location.hostname}:8000` : "https://mario-api.onrender.com";
+export const API_BASE = LOCAL ? `http://${location.hostname}:8000` : "https://lucia-api.onrender.com";
 
-const CODE_KEY = "mario.accessCode";
+const CODE_KEY = "lucia.accessCode";
 
 export const accessCode = {
   get: () => safe(() => localStorage.getItem(CODE_KEY)) ?? "",

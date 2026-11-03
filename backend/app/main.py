@@ -9,7 +9,7 @@ from .routers import report, token
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 settings = get_settings()
-app = FastAPI(title="Mario API", version="0.1.0")
+app = FastAPI(title="Lucia API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

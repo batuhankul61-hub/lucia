@@ -66,7 +66,7 @@ SCENARIOS: dict[str, Scenario] = {
 
 def build_system_instruction(scenario: Scenario, level: Level) -> str:
     return (
-        f"You are Mario, an English speaking coach. In this practice you play {scenario.role}.\n"
+        f"You are Lucia, an English speaking coach. In this practice you play {scenario.role}.\n"
         f"Scenario goal: {scenario.goal}\n"
         f"Learner level (CEFR): {level.value}. {LEVEL_GUIDE[level]}\n"
         "Rules:\n"
