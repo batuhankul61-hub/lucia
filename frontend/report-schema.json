@@ -1,0 +1,139 @@
+{
+  "properties": {
+    "grammar_mistakes": {
+      "items": {
+        "properties": {
+          "original": {
+            "description": "The learner's words, copied exactly from the transcript.",
+            "title": "Original",
+            "type": "STRING"
+          },
+          "corrected": {
+            "description": "The corrected version.",
+            "title": "Corrected",
+            "type": "STRING"
+          },
+          "explanation": {
+            "description": "One short sentence explaining the rule.",
+            "title": "Explanation",
+            "type": "STRING"
+          }
+        },
+        "propertyOrdering": [
+          "original",
+          "corrected",
+          "explanation"
+        ],
+        "required": [
+          "original",
+          "corrected",
+          "explanation"
+        ],
+        "title": "GrammarMistake",
+        "type": "OBJECT"
+      },
+      "maxItems": 15,
+      "title": "Grammar Mistakes",
+      "type": "ARRAY"
+    },
+    "natural_phrasing": {
+      "items": {
+        "properties": {
+          "original": {
+            "description": "The learner's words, copied exactly from the transcript.",
+            "title": "Original",
+            "type": "STRING"
+          },
+          "suggestion": {
+            "description": "A more natural way a native speaker would say it.",
+            "title": "Suggestion",
+            "type": "STRING"
+          }
+        },
+        "propertyOrdering": [
+          "original",
+          "suggestion"
+        ],
+        "required": [
+          "original",
+          "suggestion"
+        ],
+        "title": "NaturalPhrasing",
+        "type": "OBJECT"
+      },
+      "maxItems": 10,
+      "title": "Natural Phrasing",
+      "type": "ARRAY"
+    },
+    "vocabulary": {
+      "items": {
+        "properties": {
+          "word": {
+            "title": "Word",
+            "type": "STRING"
+          },
+          "meaning": {
+            "description": "Short, simple English definition.",
+            "title": "Meaning",
+            "type": "STRING"
+          },
+          "example": {
+            "description": "An example sentence that fits this conversation.",
+            "title": "Example",
+            "type": "STRING"
+          }
+        },
+        "propertyOrdering": [
+          "word",
+          "meaning",
+          "example"
+        ],
+        "required": [
+          "word",
+          "meaning",
+          "example"
+        ],
+        "title": "VocabularyItem",
+        "type": "OBJECT"
+      },
+      "maxItems": 10,
+      "title": "Vocabulary",
+      "type": "ARRAY"
+    },
+    "fluency_score": {
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Fluency Score",
+      "type": "INTEGER"
+    },
+    "accuracy_score": {
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Accuracy Score",
+      "type": "INTEGER"
+    },
+    "summary": {
+      "description": "Two or three encouraging sentences of overall feedback.",
+      "title": "Summary",
+      "type": "STRING"
+    }
+  },
+  "propertyOrdering": [
+    "grammar_mistakes",
+    "natural_phrasing",
+    "vocabulary",
+    "fluency_score",
+    "accuracy_score",
+    "summary"
+  ],
+  "required": [
+    "grammar_mistakes",
+    "natural_phrasing",
+    "vocabulary",
+    "fluency_score",
+    "accuracy_score",
+    "summary"
+  ],
+  "title": "Report",
+  "type": "OBJECT"
+}

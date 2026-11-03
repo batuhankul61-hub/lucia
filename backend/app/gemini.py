@@ -9,21 +9,11 @@ from google.genai import errors, types
 
 from .config import Settings
 from .report_schema import Report, ReportUsage, Turn
-from .scenarios import Level, Scenario, build_system_instruction
+from .scenarios import REPORT_INSTRUCTION, Level, Scenario, build_system_instruction
 
 log = logging.getLogger(__name__)
 
 RETRYABLE = {429, 500, 503}
-
-REPORT_INSTRUCTION ="""You are an English teacher reviewing a learner's spoken practice conversation.
-The transcript comes from speech recognition, so ignore capitalisation, missing punctuation and filler words.
-Only judge lines spoken by the LEARNER.
-Rules:
-- Every "original" field must be copied word for word from a single LEARNER line. Never paraphrase it.
-- Only list real mistakes. If a sentence is correct, don't mention it.
-- If the learner said very little, return short lists and say so in the summary.
-- fluency_score: how smoothly and fully they expressed ideas. accuracy_score: grammar and word choice.
-- Vocabulary: up to 5 useful words or phrases that came up in the conversation or in your corrections."""
 
 
 class GeminiService:
@@ -55,6 +45,7 @@ class GeminiService:
         )
 
     async def generate_report(self, scenario: Scenario, level: Level, turns: list[Turn]) -> tuple[str, ReportUsage]:
+        # Same layout as reportPrompt() in frontend/js/byok.js.
         transcript = "\n".join(f"{'LEARNER' if t.role == 'user' else 'TUTOR'}: {t.text}" for t in turns)
         contents = f"Scenario: {scenario.title}. Learner level: {level.value}.\n\nTranscript:\n{transcript}"
         config = types.GenerateContentConfig(

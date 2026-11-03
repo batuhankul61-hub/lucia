@@ -7,6 +7,7 @@ Lucia is an installable web app (PWA) for practising spoken English. You pick a 
 - **History and progress**: conversations and reports are stored on the device (IndexedDB), with a score-over-time chart.
 - **Measured**: every conversation records connect time, time to first voice reply, reply delay per turn, token usage and estimated cost. A Metrics screen summarises them.
 - **Works offline where it can**: the app shell, history and metrics open without internet. The conversation screen says it needs a connection.
+- **Two ways to run**: through the Lucia backend (server mode), or with the learner's own free Gemini API key and no server at all (bring-your-own-key mode, see below).
 
 No build step: the frontend is plain HTML, CSS and ES modules. The backend is a small FastAPI service.
 
@@ -52,6 +53,17 @@ flowchart LR
 6. When the conversation ends, the transcript goes to `/api/report`.
 7. The report model answers in JSON that has to match a Pydantic schema (`response_schema`). Output that doesn't parse or is out of range is rejected.
 8. Grounding check: every `original` quote must appear in the learner's own lines (ignoring case and punctuation), and every vocabulary word must come from the conversation or from a kept correction. Everything else is removed and counted.
+
+### Bring-your-own-key mode
+
+On the home screen a learner can paste their own Gemini API key. The browser then does the backend's two jobs itself ([`frontend/js/byok.js`](frontend/js/byok.js)):
+
+- It creates the same single-use, locked ephemeral token with a `POST /v1beta/auth_tokens`, then opens the Live session exactly as in server mode. The key travels only in the `x-goog-api-key` header to Google. It never appears in a URL, and never goes to the Lucia server.
+- It requests the report with the same JSON schema ([`frontend/report-schema.json`](frontend/report-schema.json), exported from the backend's Pydantic model) and runs the same validation and grounding in JavaScript ([`frontend/js/grounding.js`](frontend/js/grounding.js)).
+
+The tutor prompts live in one file, [`frontend/prompts.json`](frontend/prompts.json), which both the backend and the browser read. Tests check that the exported schema matches the Pydantic model, and that the JavaScript grounding behaves like the Python version. If the server is unreachable or out of quota, the app points the learner to this option.
+
+The key is stored in the browser's `localStorage` on that device only, and can be removed with one tap. Anyone with access to the device's browser profile can read it, so it's meant for personal devices.
 
 ### Design decisions worth knowing
 
@@ -129,13 +141,17 @@ Open http://localhost:5500 in Chrome, Edge or Safari and allow the microphone. `
 
 ```bash
 cd backend
-pytest
+pytest                               # 32 backend tests
+cd ..
+node --test "frontend/tests/*.test.js"   # 7 frontend tests
 ```
 
-28 tests, all with Gemini mocked:
+All tests run with Gemini mocked:
 - token endpoint: scenario lock, no key leakage, 404/422/502/503, access code, rate limit, CORS allow-list
 - report endpoint: schema validation (bad JSON, missing fields, out-of-range scores), dropping invented mistakes, too-short conversations
 - `GeminiService`: model fallback on 503 but not on 400, JSON schema config, token locked to `VERBATIM` transcription
+- shared files: `report-schema.json` matches the Pydantic model, every scenario and level in `prompts.json` is complete
+- frontend: grounding and validation (same cases as the Python tests), transcript ordering when the learner's text arrives late, echo filter
 
 ## Project layout
 
@@ -145,7 +161,7 @@ backend/
     main.py            FastAPI app, CORS, /health
     config.py          settings from env / .env
     gemini.py          the only module that calls Gemini (tokens, reports, fallback)
-    scenarios.py       role-play prompts per scenario and CEFR level
+    scenarios.py       builds the system prompt from frontend/prompts.json
     report_schema.py   report schema + grounding check
     ratelimit.py       in-memory sliding-window limiter
     entitlements.py    plan limits (Stripe-ready seam)
@@ -153,15 +169,22 @@ backend/
   tests/
 frontend/
   index.html, manifest.webmanifest, sw.js, css/, icons/
+  prompts.json         tutor + report prompts, shared with the backend
+  report-schema.json   report response schema (exported from the backend)
+  tests/               node --test unit tests
   js/
     app.js             views and routing
+    byok.js            bring-your-own-key mode (token + report straight from the browser)
+    grounding.js       report validation and grounding (mirrors the backend)
     session.js         one conversation: mic ↔ Live ↔ speaker ↔ transcript ↔ metrics
     live.js            raw-WebSocket Live API client
     transcript.js      turn assembly + echo filter
     metrics.js         latency, usage and cost
-    db.js, chart.js, api.js, scenarios.js
+    db.js, chart.js, api.js, prompts.js, scenarios.js
     audio/             AudioWorklets (mic downsampling, playback ring buffer)
-scripts/make_icons.py  draws the PNG icons with no image library
+scripts/
+  make_icons.py           draws the PNG icons with no image library
+  export_report_schema.py writes frontend/report-schema.json
 ```
 
 ## Known limitations

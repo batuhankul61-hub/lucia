@@ -161,6 +161,11 @@ h2 { font-size: 1.05rem; }
 .toggle input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
 .toggle small { display: block; color: var(--muted); font-size: 0.9rem; }
 
+#key-panel summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#key-panel p { margin: 0 0 12px; }
+.key-form { display: grid; gap: 10px; }
+.key-form input { min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; min-width: 0; }
+
 .banner { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); }
 .banner.error { background: var(--warn-soft); color: var(--warn); }
 

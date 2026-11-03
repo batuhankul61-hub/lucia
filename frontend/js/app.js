@@ -1,7 +1,9 @@
-import { ApiError, accessCode, createReport, warmUp } from "./api.js";
+import { ApiError, accessCode, createReport, createToken, warmUp } from "./api.js";
+import { createReportWithOwnKey, createTokenWithOwnKey, ownKey } from "./byok.js";
 import { progressChart } from "./chart.js";
 import { deleteSession, getSession, listSessions, saveSession } from "./db.js";
-import { LEVELS, SCENARIOS, scenarioById } from "./scenarios.js";
+import { loadPrompts } from "./prompts.js";
+import { LEVELS, scenarioById, scenarios } from "./scenarios.js";
 import { Conversation } from "./session.js";
 
 const view = document.getElementById("view");
@@ -25,6 +27,12 @@ const fakeSource = ["localhost", "127.0.0.1"].includes(location.hostname)
   : null;
 
 let conversation = null;
+
+// With the learner's own key everything goes straight to Google; otherwise
+// through the Lucia backend.
+const usingOwnKey = () => Boolean(ownKey.get());
+const getToken = (...args) => (usingOwnKey() ? createTokenWithOwnKey(...args) : createToken(...args));
+const getReport = (...args) => (usingOwnKey() ? createReportWithOwnKey(...args) : createReport(...args));
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -77,7 +85,7 @@ function renderHome() {
     <section aria-labelledby="sc-h">
       <h2 id="sc-h" class="label">Situations</h2>
       <ul class="cards">
-        ${SCENARIOS.map(
+        ${scenarios().map(
           (s) => `
           <li><a class="card" href="#/talk/${s.id}">
             <span class="icon icon-${s.icon}" aria-hidden="true"></span>
@@ -89,7 +97,34 @@ function renderHome() {
     <label class="toggle">
       <input type="checkbox" id="speaker" ${speaker ? "checked" : ""}>
       <span><strong>Speaker mode</strong><small>Turn on if you're not wearing headphones, so the mic doesn't pick up Lucia's voice.</small></span>
-    </label>`;
+    </label>
+    <details class="panel" id="key-panel" ${usingOwnKey() ? "open" : ""}>
+      <summary>Your own Gemini API key <span class="pill" id="mode-pill">${usingOwnKey() ? "In use" : "Optional"}</span></summary>
+      <p class="muted small">Lucia normally runs through its own server. With your own free key from
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>,
+        your browser talks to Google directly instead. The key is saved only on this device and sent only to Google.</p>
+      <form id="key-form" class="key-form" autocomplete="off">
+        <input id="key-input" type="password" placeholder="${usingOwnKey() ? "Key saved on this device" : "Paste your API key"}" aria-label="Gemini API key" spellcheck="false">
+        <div class="row">
+          <button class="btn primary">Save key</button>
+          ${usingOwnKey() ? `<button class="btn ghost" type="button" id="key-remove">Remove key</button>` : ""}
+        </div>
+      </form>
+    </details>`;
+
+  view.querySelector("#key-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = view.querySelector("#key-input").value.trim();
+    if (!key) return;
+    ownKey.set(key);
+    toast("Key saved on this device.");
+    renderHome();
+  });
+  view.querySelector("#key-remove")?.addEventListener("click", () => {
+    ownKey.clear();
+    toast("Key removed.");
+    renderHome();
+  });
 
   view.querySelectorAll("[data-level]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -141,6 +176,7 @@ async function startConversation(scenario) {
   conversation = new Conversation({
     scenarioId: scenario.id,
     level: prefs.get("level", "B1"),
+    getToken,
     speakerMode: prefs.get("speaker", "0") === "1",
     fakeSource,
   });
@@ -199,7 +235,13 @@ async function startConversation(scenario) {
       err?.name === "NotAllowedError"
         ? "Microphone access was blocked. Allow it in your browser settings and try again."
         : err?.message || "Couldn't start the conversation.";
-    foot.innerHTML = `<p class="banner error">${esc(msg)}</p><a class="btn" href="#/">Back</a>`;
+    // The free server may be asleep, down or out of quota: point to the
+    // own-key option instead of a dead end.
+    const serverTrouble = !usingOwnKey() && err instanceof ApiError && [0, 429, 502, 503].includes(err.status);
+    const hint = serverTrouble
+      ? `<p class="muted small">Lucia's server isn't available right now. You can still practise with your own free Gemini API key: add it on the home screen.</p>`
+      : "";
+    foot.innerHTML = `<p class="banner error">${esc(msg)}</p>${hint}<a class="btn" href="#/">Back</a>`;
   }
 }
 
@@ -231,7 +273,7 @@ async function finishConversation(reason) {
 
 async function requestReport(session, liveMetrics) {
   try {
-    const res = await createReport(session.scenarioId, session.level, session.reportTurns);
+    const res = await getReport(session.scenarioId, session.level, session.reportTurns);
     session.report = res.report;
     session.droppedUngrounded = res.dropped_ungrounded;
     session.reportError = null;
@@ -448,5 +490,6 @@ window.addEventListener("offline", () => !conversation && route());
 window.addEventListener("pagehide", () => finishConversation("page closed"));
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
-warmUp();
+if (!usingOwnKey()) warmUp();
+await loadPrompts();
 route();

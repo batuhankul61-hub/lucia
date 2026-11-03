@@ -1,18 +1,23 @@
 // App-shell service worker: the UI, history and metrics work offline.
 // API calls and the Gemini WebSocket always go to the network.
 
-const VERSION = "lucia-v1";
+const VERSION = "lucia-v2";
 const SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
+  "prompts.json",
+  "report-schema.json",
   "css/style.css",
   "js/app.js",
   "js/api.js",
+  "js/byok.js",
   "js/chart.js",
   "js/db.js",
+  "js/grounding.js",
   "js/live.js",
   "js/metrics.js",
+  "js/prompts.js",
   "js/scenarios.js",
   "js/session.js",
   "js/transcript.js",

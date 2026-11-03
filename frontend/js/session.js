@@ -1,7 +1,6 @@
 // One practice conversation: wires the microphone, the Live session, the
 // speaker and the transcript together, and measures it.
 
-import { createToken } from "./api.js";
 import { AudioIO } from "./audio/audio-io.js";
 import { LiveSession } from "./live.js";
 import { SessionMetrics } from "./metrics.js";
@@ -15,9 +14,11 @@ const ECHO_TAIL_MS = 400;
 const KICKOFF = "(The learner has joined. Greet them in character and start the scenario.)";
 
 export class Conversation extends EventTarget {
-  constructor({ scenarioId, level, speakerMode = false, fakeSource = null }) {
+  /** `getToken(scenarioId, level)` comes from the backend (server mode) or
+   * from byok.js (the learner's own key). */
+  constructor({ scenarioId, level, getToken, speakerMode = false, fakeSource = null }) {
     super();
-    Object.assign(this, { scenarioId, level, speakerMode, fakeSource });
+    Object.assign(this, { scenarioId, level, getToken, speakerMode, fakeSource });
     this.audio = new AudioIO();
     this.transcript = new Transcript((turn) => this.emit("turn", turn));
     this.state = "idle";
@@ -48,7 +49,7 @@ export class Conversation extends EventTarget {
     this.audio.onPlayback = (e) => this.onPlayback(e);
     await this.audio.start({ fakeSource: this.fakeSource });
 
-    const { token, model, max_session_minutes } = await createToken(this.scenarioId, this.level);
+    const { token, model, max_session_minutes } = await this.getToken(this.scenarioId, this.level);
     this.metrics = new SessionMetrics(model);
     this.maxMs = max_session_minutes * 60_000;
 

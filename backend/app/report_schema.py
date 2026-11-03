@@ -63,6 +63,20 @@ class ReportResponse(BaseModel):
     dropped_ungrounded: int = 0
 
 
+def gemini_response_schema() -> dict:
+    """`Report` as the Gemini API's response schema, the way the SDK sends it.
+
+    Written to frontend/report-schema.json by scripts/export_report_schema.py
+    for bring-your-own-key mode; a test keeps the file in sync with `Report`.
+    Uses the SDK's (private) transformer so both modes send the same schema.
+    """
+    from google.genai import Client, _transformers
+
+    schema = _transformers.t_schema(Client(api_key="unused")._api_client, Report)
+    return schema.model_dump(mode="json", exclude_none=True, by_alias=True)
+
+
+# Python's \w includes Unicode letters; transcript.js uses the same rule.
 _NON_WORD = re.compile(r"[^\w']+")
 
 
